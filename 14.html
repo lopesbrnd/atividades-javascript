@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imagens de Cachorros</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+        }
+        img {
+            border-radius: 10px;
+            margin: 10px;
+        }
+        #dog-image {
+            max-width: 600px; /* Tamanho aumentado da imagem principal */
+            height: auto;
+        }
+        .gallery img {
+            max-width: 100px; /* Tamanho diminuído das imagens da galeria */
+            height: auto;
+            cursor: pointer; /* Cursor muda para indicar que é clicável */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        #selected-favorite {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center; /* Centraliza a imagem favorita */
+        }
+        #selected-image {
+            display: none; /* Inicialmente oculto */
+            max-width: 600px; /* Tamanho da imagem favorita */
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Imagens de Cachorros</h1>
+    <select id="breed-select">
+        <option value="">Escolha uma raça</option>
+    </select>
+    <div id="dog-container">
+        <img id="dog-image" src="" alt="Imagem de um cachorro">
+    </div>
+    <button id="favorite-btn">Adicionar aos Favoritos</button>
+    <button id="new-dog-btn">Nova Imagem</button>
+    <button id="previous-image-btn">Imagem Anterior</button>
+
+    <div>
+        <h3>Tamanho da Imagem Principal</h3>
+        <button id="increase-main-size">Aumentar Tamanho</button>
+        <button id="decrease-main-size">Diminuir Tamanho</button>
+    </div>
+
+    <div>
+        <h3>Tamanho das Imagens da Galeria</h3>
+        <button id="increase-gallery-size">Aumentar Tamanho</button>
+        <button id="decrease-gallery-size">Diminuir Tamanho</button>
+    </div>
+
+    <div class="error" id="error-message"></div>
+
+    <h2>Galeria de Favoritos</h2>
+    <div class="gallery" id="favorites-gallery"></div>
+
+    <div id="selected-favorite">
+        <h3>Imagem Favorita Selecionada</h3>
+        <img id="selected-image" src="" alt="Imagem Favorita">
+    </div>
+
+    <script>
+        const dogImage = document.getElementById('dog-image');
+        const newDogBtn = document.getElementById('new-dog-btn');
+        const favoriteBtn = document.getElementById('favorite-btn');
+        const previousImageBtn = document.getElementById('previous-image-btn');
+        const breedSelect = document.getElementById('breed-select');
+        const favoritesGallery = document.getElementById('favorites-gallery');
+        const errorMessage = document.getElementById('error-message');
+        const selectedImage = document.getElementById('selected-image');
+
+        let currentDogImage = '';
+        let previousDogImage = ''; // Para armazenar a imagem anterior
+        const favoritesSet = new Set(); // Conjunto para armazenar imagens favoritas
+        let mainImageSize = 600; // Tamanho inicial da imagem principal
+        let galleryImageSize = 100; // Tamanho inicial das imagens da galeria
+
+        async function fetchBreeds() {
+            const response = await fetch('https://dog.ceo/api/breeds/list/all');
+            const data = await response.json();
+            const breeds = Object.keys(data.message);
+            breeds.forEach(breed => {
+                const option = document.createElement('option');
+                option.value = breed;
+                option.textContent = breed.charAt(0).toUpperCase() + breed.slice(1);
+                breedSelect.appendChild(option);
+            });
+        }
+
+        async function fetchDogImage(breed) {
+            previousDogImage = currentDogImage; // Armazena a imagem atual antes de mudar
+            const response = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
+            const data = await response.json();
+            currentDogImage = data.message;
+            dogImage.src = currentDogImage;
+            errorMessage.textContent = ''; // Limpa a mensagem de erro ao buscar uma nova imagem
+        }
+
+        newDogBtn.addEventListener('click', () => {
+            const selectedBreed = breedSelect.value;
+            if (selectedBreed) {
+                fetchDogImage(selectedBreed);
+            } else {
+                alert("Por favor, escolha uma raça.");
+            }
+        });
+
+        favoriteBtn.addEventListener('click', () => {
+            if (currentDogImage) {
+                if (favoritesSet.has(currentDogImage)) {
+                    errorMessage.textContent = "Esta imagem já está nos favoritos!";
+                } else {
+                    favoritesSet.add(currentDogImage);
+                    const img = document.createElement('img');
+                    img.src = currentDogImage;
+                    img.style.maxWidth = `${galleryImageSize}px`; // Define o tamanho das imagens da galeria
+                    img.addEventListener('click', () => {
+                        selectedImage.src = img.src; // Atualiza a imagem selecionada
+                        selectedImage.style.display = 'block'; // Exibe a imagem selecionada
+                    });
+                    favoritesGallery.appendChild(img);
+                    errorMessage.textContent = ''; // Limpa a mensagem de erro ao favoritar com sucesso
+                }
+            } else {
+                alert("Por favor, selecione uma imagem primeiro.");
+            }
+        });
+
+        previousImageBtn.addEventListener('click', () => {
+            if (previousDogImage) {
+                currentDogImage = previousDogImage; // Restaura a imagem anterior
+                dogImage.src = currentDogImage;
+                previousDogImage = ''; // Limpa a referência da imagem anterior
+            } else {
+                alert("Não há imagem anterior para retornar.");
+            }
+        });
+
+        document.getElementById('increase-main-size').addEventListener('click', () => {
+            mainImageSize += 20; // Aumenta o tamanho da imagem principal
+            dogImage.style.maxWidth = `${mainImageSize}px`;
+        });
+
+        document.getElementById('decrease-main-size').addEventListener('click', () => {
+            if (mainImageSize > 100) {
+                mainImageSize -= 20; // Diminui o tamanho da imagem principal
+                dogImage.style.maxWidth = `${mainImageSize}px`;
+            }
+        });
+
+        document.getElementById('increase-gallery-size').addEventListener('click', () => {
+            galleryImageSize += 10; // Aumenta o tamanho das imagens da galeria
+            const galleryImages = favoritesGallery.getElementsByTagName('img');
+            for (let img of galleryImages) {
+                img.style.maxWidth = `${galleryImageSize}px`;
+            }
+        });
+
+        document.getElementById('decrease-gallery-size').addEventListener('click', () => {
+            if (galleryImageSize > 20) {
+                galleryImageSize -= 10; // Diminui o tamanho das imagens da galeria
+                const galleryImages = favoritesGallery.getElementsByTagName('img');
+                for (let img of galleryImages) {
+                    img.style.maxWidth = `${galleryImageSize}px`;
+                }
+            }
+        });
+
+        breedSelect.addEventListener('change', () => {
+            const selectedBreed = breedSelect.value;
+            if (selectedBreed) {
+                fetchDogImage(selectedBreed);
+            }
+        });
+
+        // Carregar as raças ao abrir a página
+        fetchBreeds();
+    </script>
+</body>
+</html>
