@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hora Atual em Diferentes Locais</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #time {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+        #location {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hora Atual</h1>
+    <select id="timezone-select"></select>
+    <button id="get-time">Ver Hora</button>
+    <div id="location"></div>
+    <div id="time">Selecione um local e clique em "Ver Hora"</div>
+
+    <script>
+        async function loadTimezones() {
+            try {
+                const response = await fetch('http://worldtimeapi.org/api/timezone');
+                const timezones = await response.json();
+                const select = document.getElementById('timezone-select');
+
+                timezones.forEach(timezone => {
+                    const option = document.createElement('option');
+                    option.value = timezone;
+                    option.textContent = timezone.replace('_', ' ');
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar fusos horários:', error);
+            }
+        }
+
+        async function fetchTime(timezone) {
+            try {
+                const response = await fetch(`http://worldtimeapi.org/api/timezone/${timezone}`);
+                const data = await response.json();
+                const dateTime = new Date(data.datetime);
+                document.getElementById('location').innerText = `Local: ${data.timezone}`;
+                document.getElementById('time').innerText = dateTime.toLocaleString('pt-BR', {
+                    timeZone: timezone,
+                    hour12: false
+                });
+            } catch (error) {
+                document.getElementById('time').innerText = 'Erro ao carregar a hora.';
+                console.error('Erro:', error);
+            }
+        }
+
+        document.getElementById('get-time').addEventListener('click', () => {
+            const selectedTimezone = document.getElementById('timezone-select').value;
+            fetchTime(selectedTimezone);
+        });
+
+        // Carregar os fusos horários ao iniciar a página
+        loadTimezones();
+    </script>
+</body>
+</html>
