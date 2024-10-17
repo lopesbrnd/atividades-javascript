@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de Moves de Pokémon</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif; /* Define a fonte do corpo da página */
+      margin: 0; /* Remove a margem padrão do navegador */
+      padding: 20px; /* Adiciona espaçamento interno */
+      text-align: center; /* Centraliza o texto */
+    }
+    #pokemonInput {
+      padding: 10px; /* Espaçamento interno do campo de entrada */
+      font-size: 16px; /* Tamanho da fonte do campo de entrada */
+    }
+    #searchBtn {
+      padding: 10px 20px; /* Espaçamento interno do botão */
+      font-size: 16px; /* Tamanho da fonte do botão */
+      cursor: pointer; /* Muda o cursor para indicar que é clicável */
+      background-color: #ffcb05; /* Cor de fundo do botão */
+      border: none; /* Remove a borda do botão */
+      color: #3d7dca; /* Cor do texto do botão */
+    }
+    #moves {
+      margin-top: 20px; /* Espaço acima da seção de movimentos */
+      text-align: left; /* Alinha o texto à esquerda */
+      max-width: 600px; /* Largura máxima da lista de movimentos */
+      margin-left: auto; /* Centraliza horizontalmente */
+      margin-right: auto; /* Centraliza horizontalmente */
+    }
+    #moves ul {
+      list-style-type: none; /* Remove os marcadores da lista */
+      padding: 0; /* Remove o preenchimento padrão da lista */
+    }
+    #moves ul li {
+      padding: 5px 0; /* Espaçamento acima e abaixo dos itens da lista */
+    }
+  </style>
+</head>
+<body>
+  <h1>Visualizador de Moves de Pokémon</h1>
+  <p>Digite o nome ou número do Pokémon ou selecione da lista:</p>
+  
+  <!-- Campo de entrada para o nome ou número do Pokémon -->
+  <input type="text" id="pokemonInput" placeholder="Ex: Pikachu ou 25" />
+  <!-- Botão para buscar o Pokémon -->
+  <button id="searchBtn">Buscar</button>
+  
+  <div>
+    <!-- Caixa de seleção para escolher um Pokémon da lista -->
+    <select id="pokemonSelect">
+      <option value="">Escolha um Pokémon</option> <!-- Opção padrão -->
+    </select>
+  </div>
+  
+  <div id="moves">
+    <h3>Moves:</h3>
+    <!-- Lista para exibir os movimentos do Pokémon -->
+    <ul id="pokemonMovesList"></ul>
+  </div>
+  
+  <script>
+    // Seleciona os elementos HTML necessários
+    const pokemonInput = document.getElementById('pokemonInput'); // Campo de entrada
+    const searchBtn = document.getElementById('searchBtn'); // Botão de busca
+    const pokemonMovesList = document.getElementById('pokemonMovesList'); // Lista de movimentos
+    const pokemonSelect = document.getElementById('pokemonSelect'); // Caixa de seleção
+
+    // Função para buscar os dados do Pokémon
+    function getPokemonData(pokemonName) {
+      // Faz uma requisição para a API com o nome do Pokémon
+      fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonName}`)
+        .then(function(response) {
+           
+          return response.json(); // Converte a resposta para JSON
+        })
+        .then(function(data) {
+          // Chama a função para exibir os movimentos do Pokémon
+          displayPokemonMoves(data.moves);
+        })
+        .catch(function(error) {
+          // Captura qualquer erro de rede ou outro erro
+          console.error('Erro ao buscar os dados do Pokémon:', error);
+          alert('Erro ao buscar os dados do Pokémon');
+          pokemonMovesList.innerHTML = ''; // Limpa a lista de movimentos
+        });
+    }
+
+    // Função para exibir os movimentos do Pokémon
+    function displayPokemonMoves(moves) {
+      pokemonMovesList.innerHTML = ''; // Limpa a lista de movimentos
+
+      // Adiciona os movimentos à lista
+      moves.forEach(function(moveData) {
+        const moveItem = document.createElement('li'); // Cria um novo item de lista
+        // Define o texto do item como o nome do movimento, capitalizando a primeira letra
+        moveItem.textContent = moveData.move.name.charAt(0).toUpperCase() + moveData.move.name.slice(1);
+        pokemonMovesList.appendChild(moveItem); // Adiciona o item à lista de movimentos
+      });
+    }
+
+    // Evento para o botão de busca
+    searchBtn.addEventListener('click', function() {
+      const pokemonName = pokemonInput.value.toLowerCase(); // Obtém o valor do campo de entrada
+      getPokemonData(pokemonName); // Chama a função para buscar os dados do Pokémon
+    });
+
+    // Evento para a caixa de seleção
+    pokemonSelect.addEventListener('change', function() {
+      const pokemonName = event.target.value; // Obtém o nome do Pokémon selecionado
+      if (pokemonName) {
+        getPokemonData(pokemonName); // Chama a função para buscar os dados do Pokémon
+      }
+    });
+
+    // Função para carregar a lista de Pokémon na caixa de seleção
+    function loadPokemonList() {
+      // Faz uma requisição para a API para obter a lista de Pokémon
+      fetch('https://pokeapi.co/api/v2/pokemon?limit=1000')
+        .then((response)=> {
+          return response.json(); // Converte a resposta para JSON
+        })
+        .then((data)=> {
+          const pokemons = data.results; // Obtém a lista de Pokémon
+
+          // Adiciona cada Pokémon à caixa de seleção
+          pokemons.forEach((pokemon)=>{
+            const option = document.createElement('option'); // Cria uma nova opção
+            option.value = pokemon.name; // Define o valor da opção
+            option.textContent = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1); // Capitaliza o nome
+            pokemonSelect.appendChild(option); // Adiciona a opção à caixa de seleção
+          });
+        })
+        .catch(function(error) {
+          // Captura qualquer erro de rede ou outro erro
+          console.error('Erro ao carregar a lista de Pokémon:', error);
+        });
+    }
+
+    // Carrega a lista de Pokémon ao iniciar
+    loadPokemonList();
+  </script>
+</body>
+</html>
