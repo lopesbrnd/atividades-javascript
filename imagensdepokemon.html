@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon Sprite Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    #sprite {
+      margin-top: 20px;
+    }
+    #pokemonInput {
+      padding: 10px;
+      font-size: 16px;
+    }
+    #searchBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #ffcb05;
+      border: none;
+      color: #3d7dca;
+    }
+    #sprite img {
+      max-width: 150px;
+      margin: 10px;
+    }
+    #pokemonSelect {
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Visualizador de Sprites de Pokémon</h1>
+  <p>Digite o nome ou número do Pokémon ou selecione da lista:</p>
+  
+  <input type="text" id="pokemonInput" placeholder="Ex: Pikachu ou 25" />
+  <button id="searchBtn">Buscar</button>
+  
+  <div>
+    <select id="pokemonSelect">
+      <option value="">Escolha um Pokémon</option>
+    </select>
+  </div>
+  
+  <div id="sprite">
+    <p id="pokemonName"></p>
+    <div>
+      <img id="pokemonSprite" src="" alt="Sprite do Pokémon" />
+      <img id="pokemonShiny" src="" alt="Sprite shiny do Pokémon" />
+    </div>
+  </div>
+  
+  <script>
+    const pokemonInput = document.getElementById('pokemonInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const pokemonSprite = document.getElementById('pokemonSprite');
+    const pokemonShiny = document.getElementById('pokemonShiny');
+    const pokemonNameElem = document.getElementById('pokemonName');
+    const pokemonSelect = document.getElementById('pokemonSelect');
+
+    const getPokemonData = async (pokemonName) => {
+      try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonName}`);
+        if (!response.ok) throw new Error('Pokémon não encontrado!');
+        
+        const data = await response.json();
+        const normalSpriteUrl = data.sprites.front_default;
+        const shinySpriteUrl = data.sprites.front_shiny;
+
+        pokemonNameElem.textContent = data.name.charAt(0).toUpperCase() + data.name.slice(1);
+        pokemonSprite.src = normalSpriteUrl;
+        pokemonSprite.alt = `Sprite de ${data.name}`;
+        pokemonShiny.src = shinySpriteUrl;
+        pokemonShiny.alt = `Sprite shiny de ${data.name}`;
+      } catch (error) {
+        alert(error.message);
+        pokemonNameElem.textContent = '';
+        pokemonSprite.src = '';
+        pokemonShiny.src = '';
+      }
+    };
+
+    searchBtn.addEventListener('click', () => {
+      const pokemonName = pokemonInput.value.toLowerCase();
+      getPokemonData(pokemonName);
+    });
+
+    pokemonSelect.addEventListener('change', (event) => {
+      const pokemonName = event.target.value;
+      if (pokemonName) {
+        getPokemonData(pokemonName);
+      }
+    });
+
+    const loadPokemonList = async () => {
+      try {
+        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1000');
+        const data = await response.json();
+        const pokemons = data.results;
+
+        pokemons.forEach(pokemon => {
+          const option = document.createElement('option');
+          option.value = pokemon.name;
+          option.textContent = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1);
+          pokemonSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Erro ao carregar a lista de Pokémon:', error);
+      }
+    };
+
+    // Carrega a lista de Pokémon ao iniciar
+    loadPokemonList();
+  </script>
+</body>
+</html>
+
