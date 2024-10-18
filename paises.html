@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes dos Países</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #countryDetails {
+            margin-top: 20px;
+            border: 1px solid #ff0000;
+            padding: 10px;
+            display: none;
+        }
+        img {
+            max-width: 100px; /* Limita o tamanho da bandeira */
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Informações sobre Países</h1>
+
+    <input type="text" id="search" placeholder="Pesquise um país..." oninput="filterCountries()">
+    <select id="countrySelect" onchange="showCountryDetails()">
+        <option value="">Selecione um país</option>
+    </select>
+
+    <div id="countryDetails">
+        <h2>Detalhes do País</h2>
+        <img id="flag" alt="Bandeira do país" />
+        <p id="details"></p>
+    </div>
+
+    <script>
+        let countries = [];
+
+        // Carregar dados da API
+        function loadCountries() {
+            fetch('https://restcountries.com/v3.1/all')
+                .then(response => response.json())
+                .then(data => {
+                    countries = data;
+                    populateDropdown(countries); // Preenche o dropdown com todos os países
+                })
+                .catch(error => console.error('Erro ao carregar os países:', error));
+        }
+
+        // Popular o dropdown com os nomes dos países
+        function populateDropdown(countryList) {
+            const select = document.getElementById('countrySelect');
+            select.innerHTML = '<option value="">Selecione um país</option>'; // Resetar opções
+
+            countryList.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.name.common;
+                option.textContent = country.name.common;
+                select.appendChild(option);
+            });
+        }
+
+        // Exibir detalhes do país selecionado
+        function showCountryDetails() {
+            const selectedCountry = document.getElementById('countrySelect').value;
+            const detailsDiv = document.getElementById('countryDetails');
+            const detailsPara = document.getElementById('details');
+            const flagImg = document.getElementById('flag');
+
+            const country = countries.find(c => c.name.common === selectedCountry);
+            if (country) {
+                detailsPara.innerHTML = `
+                    Nome: ${country.name.common}<br>
+                    Capital: ${country.capital ? country.capital[0] : 'N/A'}<br>
+                    Região: ${country.region}<br>
+                    População: ${country.population.toLocaleString()}<br>
+                    Área: ${country.area.toLocaleString()} km²<br>
+                    Moeda: ${country.currencies ? Object.values(country.currencies).map(curr => curr.name).join(', ') : 'N/A'}<br>
+                `;
+                flagImg.src = country.flags.png; // Define a fonte da bandeira
+                detailsDiv.style.display = 'block';
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+        }
+
+        // Filtrar países com base na pesquisa
+        function filterCountries() {
+            const searchValue = document.getElementById('search').value.toLowerCase();
+            const filteredCountries = countries.filter(country =>
+                country.name.common.toLowerCase().includes(searchValue)
+            );
+            populateDropdown(filteredCountries); // Atualiza o dropdown com países filtrados
+
+            // Reseta os detalhes quando a pesquisa muda
+            document.getElementById('countryDetails').style.display = 'none';
+        }
+
+        // Carregar os dados ao iniciar
+        loadCountries();
+    </script>
+</body>
+</html>

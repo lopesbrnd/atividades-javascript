@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universidades por País</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        select, button, input {
+            margin: 10px 0;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Lista de Universidades por País</h1>
+
+<label for="country">Escolha o País:</label>
+<select id="country">
+    <option value="">Selecione um país</option>
+</select>
+
+<button id="searchBtn" disabled>Buscar Universidades</button>
+
+<label for="universityName">Buscar por Nome da Universidade:</label>
+<input type="text" id="universityName" placeholder="Digite o nome da universidade">
+<button id="searchByNameBtn" disabled>Buscar Universidade</button>
+
+<ul id="universityList"></ul>
+
+<script>
+    const countrySelect = document.getElementById('country');
+    const searchBtn = document.getElementById('searchBtn');
+    const universityNameInput = document.getElementById('universityName');
+    const searchByNameBtn = document.getElementById('searchByNameBtn');
+    const universityList = document.getElementById('universityList');
+
+    let universitiesData = [];
+
+    // Função para carregar a lista de países
+    function loadCountries() {
+        fetch('http://universities.hipolabs.com/search')
+            .then(response => response.json())
+            .then(universities => {
+                const countries = [...new Set(universities.map(u => u.country))];
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    countrySelect.appendChild(option);
+                });
+                searchBtn.disabled = false;
+            })
+            .catch(error => console.error('Erro ao carregar países:', error));
+    }
+
+    countrySelect.addEventListener('change', () => {
+        universityList.innerHTML = '';
+        searchBtn.disabled = !countrySelect.value; 
+        searchByNameBtn.disabled = !countrySelect.value; // Habilita busca por nome
+    });
+
+    searchBtn.addEventListener('click', () => {
+        const country = countrySelect.value;
+        universityList.innerHTML = '';
+
+        fetch(`http://universities.hipolabs.com/search?country=${country}`)
+            .then(response => response.json())
+            .then(universities => {
+                universitiesData = universities; // Armazena dados das universidades
+                if (universities.length === 0) {
+                    universityList.innerHTML = '<li>Nenhuma universidade encontrada.</li>';
+                    return;
+                }
+
+                universities.forEach(university => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = university.name;
+                    universityList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Erro ao carregar universidades:', error));
+    });
+
+    searchByNameBtn.addEventListener('click', () => {
+        const universityName = universityNameInput.value.toLowerCase();
+        universityList.innerHTML = '';
+
+        const filteredUniversities = universitiesData.filter(university => 
+            university.name.toLowerCase().includes(universityName)
+        );
+
+        if (filteredUniversities.length === 0) {
+            universityList.innerHTML = '<li>Nenhuma universidade encontrada com esse nome.</li>';
+            return;
+        }
+
+        filteredUniversities.forEach(university => {
+            const listItem = document.createElement('li');
+            listItem.textContent = university.name;
+            universityList.appendChild(listItem);
+        });
+    });
+
+    // Carregar países ao iniciar
+    loadCountries();
+</script>
+
+</body>
+</html>
